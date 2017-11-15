@@ -1,0 +1,7 @@
+here comes the material from last week's R session on knitr. Guido Schulz's slides and examples illustrating all the fantastic things you can do with knitr + Rmarkdown live on github, so you can easily check them out there.
+
+slides: https://htmlpreview.github.io/?https://github.com/chamaoskurumi/Einfuehrung_in_knitr/blob/master/knitr_Presentation.html
+example: http://rpubs.com/Gui_struggling_with_R/NYC_taxi_tips
+
+code for slides: https://github.com/chamaoskurumi/Einfuehrung_in_knitr
+code for example: https://github.com/chamaoskurumi/NYC-Taxi-Tip-Analysis

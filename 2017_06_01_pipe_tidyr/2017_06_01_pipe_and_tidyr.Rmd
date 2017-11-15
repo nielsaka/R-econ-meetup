@@ -1,0 +1,235 @@
+---
+title: "pipe and tidyr"
+author: "Niels Aka"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+set.seed(123)
+```
+
+# %>%
+
+## Example 1
+
+```{r, echo=TRUE}
+x <- rnorm(1000)
+mean(x)      # standard
+```
+```{r, echo=TRUE, warning=FALSE}
+library(magrittr)
+x %>% mean() # piped
+```
+
+## Example 1 - add arguments
+
+```{r, echo=TRUE}
+mean(x, trim = 0.2)
+x %>% mean(trim = 0.2)
+```
+
+## Example 2 - Chain of functions
+
+```{r, echo=TRUE}
+sprintf("%.15f", sqrt(var(x)))
+x %>% var() %>% sqrt() %>% sprintf("%.15f", .)
+```
+
+
+## Example 3 - Read inside out
+```{r, include=FALSE}
+set.seed(123)
+```
+
+```{r, echo=TRUE, fig.height=5}
+plot(apply(matrix(rnorm(1000, sd = 2), 
+                  ncol = 10),
+           MARGIN = 2,
+           FUN = function(x) sqrt(var(x))),
+     ylab = "estimated st. deviation")
+```
+
+## Example 3 - Read top to bottom, left to right
+```{r, include=FALSE}
+set.seed(123)
+```
+
+```{r, echo=T, fig.height=5}
+rnorm(1000, sd = 2) %>% 
+  matrix(ncol = 10) %>% 
+  apply(MARGIN = 2, FUN = . %>% var() %>% sqrt()) %>%
+  plot(ylab = "estimated st. deviation")
+```
+
+
+## Example 4 - sequence of objects
+
+```{r, echo=TRUE}
+mtcars_sub       <- subset(mtcars, hp > 120 & cyl == 6)
+mtcars_sub_trans <- transform(mtcars_sub,
+                              kpl = mpg * 0.4251,
+                              kw = hp * 0.7457)
+mtcars_sub_trans_select <-
+  mtcars_sub_trans[, c("cyl", "kpl", "kw")]
+mtcars_sub_trans_select
+```
+
+
+## Example 4 - piped
+```{r, echo=TRUE}
+mtcars %>%
+  subset(hp > 120 & cyl == 6) %>%
+  transform(kpl = mpg * 0.4251, 
+            kw  = hp  * 0.7457) %>%
+  `[`(c("cyl", "kpl", "kw"))
+```
+
+## Summary
+
+* read top to bottom \newline
+* avoid unnecessary naming \newline
+* relevant info stands out \newline
+
+The pipe is particularly useful when operating repeatedly on a single object, 
+e.g. a `data.frame`. Maybe less useful for actual programming.
+
+In RStudio, insert with ctrl/strg + shift + m.
+
+## Best practices
+
+* Pipe should have several lines. \newline
+* Each line one comprehensible piece of code. \newline
+* Not too long. \newline
+
+Debug: either rely on error message or grow pipe piece by piece until error is thrown.
+
+# tidyr
+
+## tidyr principles
+
+Use standardized format
+
+* each observation in one row
+* each variable in one column
+
+Other packages (dplyr etc.) will rely on this format.
+
+Before starting, think about what is a variable in your analysis and what isn't.
+
+## Tuberculosis Report by the WHO. Tidy?
+```{r, include=FALSE}
+library(tidyr)
+library(dplyr)
+who <- tidyr::who %>% 
+  select(-matches("newrel|new_ep|new_sn")) %>% 
+  `colnames<-`(gsub("new_sp_", "", colnames(.))) %>% 
+   `colnames<-`(gsub("65", "6599", colnames(.))) %>% 
+  slice(-(1:50))
+```
+
+\tiny
+```{r, }
+who %>% 
+  print(width = 70) # world health organisation
+```
+Hint: m = male; f = female; 014 = age 0 to 14. Cell entries are the number of tuberculosis cases.
+
+## tidyr functions
+
+tidyr provides functions to reorganise `data.frames` by changing the number of
+columns.
+\newline
+\newline
+
+Change wide to long by \textcolor{red}{gather()}ing multiple columns into fewer ones.
+\newline
+
+Change long to wide by \textcolor{red}{spread()}ing one column out across many.
+\newline
+
+Break one column into multiple with \textcolor{red}{separate()} or
+reverse with \textcolor{red}{unite()}.
+
+## Make it tidy
+
+\tiny
+```{r, echo=TRUE}
+who %>% 
+  gather(key = gender_age, value = count, -(country:year)) 
+```
+
+## Make it tidy
+
+\tiny
+```{r, echo=TRUE}
+who %>% 
+  gather(key = gender_age, value = count, -(country:year)) %>% 
+  separate(gender_age, into = c("gender", "cohort"), sep = 1)
+```
+
+
+## Mutate cohort for better readability
+
+\tiny
+```{r, echo=TRUE}
+library(dplyr)
+who %>% 
+  gather(key = gender_age, value = count, -(country:year)) %>% 
+  separate(gender_age, into = c("gender", "cohort"), sep = 1) %>% 
+  mutate(cohort = gsub("^(.+)(.{2})$", "\\1 - \\2", cohort))
+```
+
+
+## Easy to plot
+\tiny
+```{r, echo = T, warning = FALSE, fig.height=5}
+library(ggplot2)
+library(dplyr)
+who %>% 
+  gather(key = gender_age, value = count, -(country:year)) %>% 
+  separate(gender_age, into = c("gender", "cohort"), sep = 1) %>% 
+  mutate(cohort = gsub("^(.+)(.{2})$", "\\1 - \\2", cohort)) %>% 
+  group_by(year, cohort) %>% 
+  summarise(tb_count = sum(count, na.rm = TRUE)) %>% 
+  ggplot(aes(x = year, y = tb_count, colour = cohort)) + geom_line()
+```
+
+## Remark
+
+Here, `cohort` is a variable. In other instances, we might be more interested in
+analysing tuberculosis counts in relation to the maximum or minimum age. 
+
+\tiny
+```{r, echo = TRUE}
+who %>% 
+  gather(key = gender_age, value = count, -(country:year)) %>% 
+  separate(gender_age, into = c("gender", "cohort"), sep = 1) %>% 
+  separate(cohort, into = c("min_age", "max_age"), sep = -3)
+```
+\normalsize
+What is a variable depends on the situation.
+
+## RStudio Cheatsheet
+
+```{r, out.height="150px"}
+# knitr::include_graphics("tidy_data_cheatsheet.jpg")
+```
+
+Found [\textcolor{blue}{here}](https://github.com/rstudio/cheatsheets/raw/master/source/pdfs/data-import-cheatsheet.pdf) or in \newline Rstudio: Help > Cheatsheets > Data Manipulation with dplyr, tidyr.
+
+For frequent use, create a hotkey (e.g. ctrl/strg + alt + d) to open this.
+
+<!-- ## Finally... -->
+
+<!-- what constitutes a variable depends on context. -->
+
+<!-- ## Material -->
+
+<!-- One of Hadley Wickham's talks about the tidyverse, [\textcolor{blue}{here}](https://www.rstudio.com/resources/videos/data-science-in-the-tidyverse/) -->
+
+<!-- [\textcolor{blue}{Introduction to magrittr}](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html) -->
+
+<!-- [\textcolor{blue}{tidyr's website}](http://tidyr.tidyverse.org/) -->
+
+

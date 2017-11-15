@@ -1,0 +1,124 @@
+Regular Expressions in R
+========================================================
+date: 10 November 2017
+width: 1600
+height: 700
+
+Basics
+========================================================
+
+- find patterns in text
+- "wildcard on steroids"
+- usage across programming languages and in many text editors
+
+From [Wikipedia](https://en.wikipedia.org/wiki/Regular_expression)
+
+    a sequence of characters that define a search pattern. Usually this
+    pattern is then used by string searching algorithms for "find" or "find
+    and replace" operations on strings.
+
+Useful links
+========================================================
+
+* [cheat sheet](https://www.cheatography.com/davechild/cheat-sheets/regular-expressions/pdf/)
+* [regex tester](https://regex101.com/) - super useful
+* [detailed info](https://www.regular-expressions.info/)
+
+
+In R
+========================================================
+
+```{r}
+sonnet18 <- readRDS("data/sonnet18.rds")
+sonnet18
+```
+
+In R - gsub() - basics
+========================================================
+
+```{r}
+gsub(pattern = "art", replacement = "are", sonnet18)
+```
+
+In R - gsub() - correct line breaks
+========================================================
+
+```{r}
+s18_clean <- gsub(pattern = ",\\s{2,}", replacement = ",\n", sonnet18)
+cat(s18_clean)
+```
+
+In R - gsub() - grouping and `|` as OR
+========================================================
+
+```{r}
+s18_clean <- gsub(
+  pattern = "(,\\s{2,}|:\\s{2,}|\\?\\s{2,})",
+  replacement = "\n", sonnet18)
+cat(s18_clean)
+```
+***
+```{r}
+print(s18_clean)
+```
+
+In R - gsub() - using a list of characters
+========================================================
+
+```{r}
+s18_clean <- gsub(pattern = "[,?:]\\s{2,}",
+                  replacement = "\n", sonnet18, perl = TRUE)
+cat(s18_clean)
+```
+
+In R - gsub() - refering back to group
+========================================================
+
+```{r}
+s18_clean <- gsub(pattern = "(,|\\?|:)\\s{2,}",
+                  replacement = "\\1\n", sonnet18)
+cat(s18_clean)
+```
+
+In R - gsub() - the simplest solution
+========================================================
+
+```{r}
+s18_clean <- gsub(pattern = "\\s{2,}",
+                  replacement = "\n", sonnet18)
+cat(s18_clean)
+```
+
+
+In R - grep()
+========================================================
+
+```{r}
+sonnets <- readRDS("data/sonnets.rds")
+grep(pattern = "love", x = sonnets)
+grepl(pattern = "love", x = sonnets)
+```
+
+
+In R - grep()
+========================================================
+
+Which sonnets contain the string `"I love"`?
+
+```{r}
+grep(pattern = "I love", x = sonnets)
+```
+
+Which sonnets contain at least one `"love"` **without** the string `"I "` in front.
+
+```{r}
+grep(pattern = "(?<!I )love", x = sonnets, perl = TRUE)
+```
+
+
+More cheat sheets
+========================================================
+
+* https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf
+* https://github.com/rstudio/cheatsheets/raw/master/strings.pdf
+

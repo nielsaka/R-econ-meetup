@@ -1,0 +1,113 @@
+---
+title: "Intro to 'testthat' package"
+author: "Niels Aka"
+date: "27 September 2016"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+suppressPackageStartupMessages(library(testthat))
+```
+
+## Why (unit) test?
+
+[Wikipedia](https://en.wikipedia.org/wiki/Unit_testing): "unit testing is a software testing method by which individual units of source code [...] are tested to determine whether they are fit for use" \newline
+$\Rightarrow$ lowest level of testing
+\newline
+
+- ensures that single functions work as expected
+
+- catch bugs early on
+
+- save time later on
+
+## Why test as a scientist?
+
+- a plus/minus sign error can invalidate research results...
+
+- more integrity, reliability, trust
+
+## Why test in R?
+
+- starts to make sense when you
+    
+    * write own functions
+    
+    * customise other functions
+  
+- R language is flexible (implicit coercion, recycling) \newline
+$\Rightarrow$ make sure inputs + output are as expected
+
+## Unit testing in R: the `testthat` package
+
+- ideal for packages, but works also with scripts
+
+- tests are organised in three levels
+    1. context  $\rightarrow$ general functionality
+    2. test suites $\rightarrow$ a specific aspect
+    3. expectations $\rightarrow$ a single unit of functionality
+
+## Simple example
+```{r, eval=FALSE}
+context("String length")
+
+test_that("str_length is number of characters", {
+  expect_equals(str_length("a"), 1)
+  expect_equals(str_length("ab"), 2)
+  expect_equals(str_length("abc"), 3)
+})
+```
+
+## Workflow
+
+When using `testthat`, there are usually three steps
+
+1. write code
+2. write tests
+3. source `testthat.R` which runs all tests in separate testing environments
+  and reports summary of successes and failures
+
+## Example file: `transform.R`
+```{r}
+# transform time-series in levels into growth rates
+trans_gr <- function(x) {
+  diff(log(x))
+}
+```
+
+## Example file: `test-transform.R`
+```{r, eval=FALSE}
+context("Testing transformation routines")
+
+test_that("transforming to growth rates works", {
+  n    <- 5
+  rate <- 0.02
+  x <- (1 + rate) ^ (1:n)
+  
+  # test class
+  expect_is(object = trans_gr(x),
+            class = "numeric")
+  # test numerical results
+  ref <- rep(rate, n - 1)
+  expect_equal(object = trans_gr(x), expected = ref,
+               tol = 1e-3)
+  expect_identical(object = trans_gr(x), expected = ref)
+})
+```
+
+## Example file: `testthat.R`
+
+```{r, echo=TRUE}
+source("transform.R")
+testthat::test_file("test-transform.R")
+```
+
+
+## Resources
+
+- [R Journal entry](https://www.google.de/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=0ahUKEwj8hJqe0a_PAhVpBMAKHWr4D10QFggjMAA&url=https%3A%2F%2Fjournal.r-project.org%2Farchive%2F2011-1%2FRJournal_2011-1_Wickham.pdf&usg=AFQjCNGMHc4ywSRYqlG_4qqtvXNf1mxFCg&bvm=bv.133700528,d.ZGg)
+
+- [CRAN website](https://cran.r-project.org/web/packages/testthat/index.html)
+
+- [Hadley's website](http://r-pkgs.had.co.nz/tests.html)

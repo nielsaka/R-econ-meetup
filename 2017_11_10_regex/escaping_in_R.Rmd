@@ -1,0 +1,163 @@
+---
+title: "Escaping in R"
+author: "Niels Aka"
+date: "10 November 2017"
+output: html_document
+---
+
+```{r, echo=FALSE, include=FALSE}
+Sys.setenv(LANG = "en")
+```
+
+When and why to use how many backslashes in R? That is not always
+straightforward to say. A backslash inside a string has a special meaning
+for R. If it sees one, this is a sign to "start an escape sequence inside character constants" and attach special meaning to the character following the backslash. The quote is taken from `?Quotes`. The help page provides a list with possible escape sequences such as `\n` for newline or `\\` for
+using an actual backslash.
+
+Here is an example.
+
+```{r}
+cat("zz \n zz")
+```
+
+Adding another backslash will escaping the second backslash followed by a normal `"n"`. So then,
+
+```{r}
+cat("zz \\n zz")
+```
+
+If we add another backslash, the first two will result in a single backslash in our string, now followed by the special symbol for newline.
+
+```{r}
+cat("zz \\\n zz")
+```
+
+
+
+`?Quotes` also says
+
+> Escaping a character not in the following table is an error.
+
+So,
+
+```{r, error = TRUE}
+cat("zz \A zz")
+```
+```{r}
+cat("zz \\A zz")
+```
+```{r, error = TRUE}
+cat("zz \\\A zz")
+```
+
+Regular expressions
+===================
+
+So far so good. Things start to get a bit more complicated when you work with
+regular expressions and what to, for example, substitute parts of a string
+with another string.
+
+```{r}
+gsub(pattern = "Y", replacement = "X", x = "zz Y zz")
+```
+
+Let's wrap that line of code in a function to concentrate only on the string
+we want to replace `"Y"`with.
+
+```{r}
+my_sub <- function(rep) {
+  cat(gsub(pattern = "Y", replacement = rep, x = "zz Y zz"))
+}
+```
+
+Same example as before.
+
+```{r}
+my_sub("\n")
+```
+
+Looks good. But the behaviour starts to be different when adding more backslashes.
+
+```{r}
+my_sub("\\n")
+```
+
+Instead of `zz \n zz` we now have `zz n zz`. The backslash that we inserted in the string by escaping it did not get printed.
+
+```{r}
+my_sub("\\")
+```
+
+That means we have to add more backslashes than before to get the desired result.
+
+```{r}
+my_sub("\\\n")
+
+my_sub("\\\\n")
+```
+
+Hence, one [R wisdom](https://stackoverflow.com/questions/14879204/how-to-escape-a-backslash-in-r) on stack overflow 
+
+    When in doubt, keep adding slashes until it works. – joran Feb 14 '13 at 16:21 
+
+But to understand better what is going one, let's assume we wanted to replace every backslash in a string with two more backslashes.
+
+```{r, error = TRUE}
+gsub("\", "\\", "\")
+```
+
+Ah, yes, forgot to escape the backslashes. They were escaping the quotation marks instead.
+
+```{r, error = TRUE}
+# two backslashes means string of length one
+# containing one backslash.
+string <- "\\"
+# we are looking for a pattern consisting of
+# one backslash
+pattern <- "\\"
+# and want to replace with two
+replacement <- "\\\\"
+
+gsub(pattern, replacement, string)
+```
+
+Something is still off. Apparently the pattern we are looking for is not a valid regular expression.
+
+```{r}
+string <- "\\"
+pattern <- "\\\\"
+replacement <- "\\\\"
+
+(x <- gsub(pattern, replacement, string))
+nchar(x)
+```
+
+Hm, the code ran. But the outcome is still of length one.
+
+```{r}
+string <- "\\"
+pattern <- "\\\\"
+replacement <- "\\\\\\\\" # add more backslashes in replacement
+
+(x <- gsub(pattern, replacement, string))
+nchar(x)
+```
+Now it finally worked! This example was taken from [here](https://stackoverflow.com/questions/27491986/r-gsub-replacing-backslashes) with the following insight:
+
+    Here's what you need:
+    
+    gsub("\\\\", "\\\\\\\\", "\\")
+    [1] "\\\\"
+    
+    The reason that you need four backslashes to represent one literal
+    backslash is that "\" is an escape character in both R strings and for the
+    regex engine to which you're ultimately passing your patterns. If you were
+    talking directly to the regex engine, you'd use "\\" to indicate a literal
+    backslash. But in order to get R to pass "\\" on to the regex engine, you
+    need to type "\\\\". 
+
+## Background Material & Links
+
+* Short [Tutorial](https://rstudio-pubs-static.s3.amazonaws.com/74603_76cd14d5983f47408fdf0b323550b846.html) on regular expressions in R by Albert Kim
+
+* Book [Handling and Processing Strings in R](http://gastonsanchez.com/Handling_and_Processing_Strings_in_R.pdf) by Gaston Sanchez
