@@ -124,14 +124,6 @@ $(document).ready(function () {
 </div>
 
 
-<div id="summary" class="section level2">
-<h2>Summary</h2>
-<pre><code>The reason that you need four backslashes to represent one literal
-backslash is that &quot;\&quot; is an escape character in both R strings and for the
-regex engine to which you're ultimately passing your patterns. If you were
-talking directly to the regex engine, you'd use &quot;\\&quot; to indicate a literal
-backslash. But in order to get R to pass &quot;\\&quot; on to the regex engine, you
-need to type &quot;\\\\&quot;. </code></pre>
 <p>When and why to use how many backslashes in R? That is not always straightforward to say. A backslash inside a string has a special meaning for R. If it sees one, this is a sign to “start an escape sequence inside character constants” and attach special meaning to the character following the backslash. The quote is taken from <code>?Quotes</code>. The help page provides a list with possible escape sequences such as <code>\n</code> for newline or <code>\\</code> for using an actual backslash.</p>
 <p>Here is an example.</p>
 <pre class="r"><code>cat(&quot;zz \n zz&quot;)</code></pre>
@@ -155,7 +147,6 @@ need to type &quot;\\\\&quot;. </code></pre>
 <pre><code>## zz \A zz</code></pre>
 <pre class="r"><code>cat(&quot;zz \\\A zz&quot;)</code></pre>
 <pre><code>## Error: '\A' is an unrecognized escape in character string starting &quot;&quot;zz \\\A&quot;</code></pre>
-</div>
 <div id="regular-expressions" class="section level1">
 <h1>Regular expressions</h1>
 <p>So far so good. Things start to get a bit more complicated when you work with regular expressions and what to, for example, substitute parts of a string with another string.</p>
