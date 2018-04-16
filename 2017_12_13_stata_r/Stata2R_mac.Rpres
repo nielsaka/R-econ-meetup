@@ -1,0 +1,330 @@
+From STATA to R
+========================================================
+author: Lisa Reiber
+date: "13.12.2017"
+width: 1440
+height: 900
+
+```{r setup,  include=FALSE, echo=FALSE, message=FALSE}
+require(knitr)
+opts_chunk$set(webgl=TRUE, cache = F)
+```
+
+Solution: RStata package
+========================================================
+- 150 of the most commonly used STATA commands
+- Syntax directly mapped into R
+- called using identical syntax
+
+[STATA fully mapped into R](https://www.r-bloggers.com/stata-fully-mapped-into-r/) (r-bloggers)
+
+
+
+Outline
+========================================================
+- Do Files & Scripts
+- Getting Data
+- Manipulating Data
+- Describing Data
+
+Overview
+========================================================
+
+**STATA**
+- Multi-purpose statistical package
+- Licenses
+- Click-an Point/ Programming
+
+***
+
+**R**
+- Free software environment for statistical computing and graphics
+- Open source
+- Programming
+
+
+Comments
+========================================================
+**STATA**
+<!-- need to specify path to your stata program in your -bash_profile -->
+```{r, results=F, engine="stata-mp", comment=""}
+* Comments
+/// Comments
+/* Multiple
+ Line
+ Comment
+*/
+```
+
+***
+**RStudio**
+```{r}
+# Comment
+#' Multi-Line
+#' Comments
+      # or cmd + shift + c
+```
+
+Preparation
+========================================================
+**STATA**
+```{r, results=F, engine="stata-mp", comment=""}
+	version 12
+	clear all
+	set more off
+	capt log cl
+```
+- No need to load/install packages
+
+***
+**R**
+```{r}
+# clear workspace
+      rm(list=ls(all=T))
+
+# Load/ Install Packages
+# 1. Option Pacman
+      if (!require("pacman")) install.packages("pacman")
+      pacman::p_load(readstata13, statar, dplyr)
+
+# 2. Option -> script
+```
+
+Paths
+========================================================
+**STATA**
+```{r, results=F, engine="stata-mp", comment=""}
+* Paths
+gl datapath	"./data"
+gl outpath  "./out"
+```
+
+***
+**R**
+```{r}
+# Paths
+dir_data    <- "./data"
+dir_home    <- "./out"
+
+# set working directory
+# setwd(dir_home)
+```
+
+Structure
+========================================================
+**STATA**
+- Syntax highlighting
+- Possible to set markers
+
+***
+**RStudio**
+- Syntax highlighting
+- Possible to give struture
+
+
+Getting Data
+========================================================
+**STATA**
+```{r, results=F, engine="stata-mp", comment=""}
+use "./data/ppfad_example.dta", clear
+
+```
+
+
+**R**
+```{r Getting Data, cache = T}
+# Package
+library(readstata13)
+
+# load ppfad dataset with labels
+ ppfad_lab <- read.dta13("./data/ppfad_example.dta", convert.factors = T)
+# ppfad_lab <- read.dta13("/Volumes/gsoep32l/ppfad.dta", convert.factors = T)
+
+class(ppfad_lab$ynetto)
+```
+Getting Data: Problems
+========================================================
+#### Problem wih Factors and Labels
+```{r,  include=FALSE, echo=FALSE, message=FALSE}
+require(dplyr)
+```
+
+```{r}
+ppfad_lab %>%
+   select(hhnr, persnr, sex, gebjahr, psample, yhhnr, ynetto, ypop) %>%
+    filter(ynetto >= 10, ynetto <20,          # realized interviews
+           ypop %in% c(1,2)) %>%              # private households
+    print() # not there
+
+class(ppfad_lab$ynetto)
+```
+
+
+Getting Data: Solution
+========================================================
+#### Solution wih Factors and Labels
+```{r,  include=FALSE, echo=FALSE, message=FALSE}
+require(dplyr)
+```
+
+```{r}
+ppfad <- read.dta13("./data/ppfad_example.dta", convert.factors = F)
+
+ppfad_2008 <-ppfad %>%
+  select(hhnr, persnr, sex, gebjahr, psample, yhhnr, ynetto, ypop) %>%
+  filter(ynetto >= 10, ynetto <20,           # (un)balanced
+         ypop %in% c(1,2))                   # private households
+
+# ynetto not a factor anymore
+class(ppfad_2008$ynetto)
+levels(ppfad_2008$ynetto)
+```
+
+Getting Data: Solution Labels
+========================================================
+### Solution with Factors and Labels
+get value labels if needed
+
+```{r}
+get.label(ppfad_2008, "ynetto") %>% head(5)
+```
+
+Manipulating Data
+========================================================
+### Missing Values
+**STATA**
+```{r, results=F, engine="stata-mp", comment=""}
+* Missing Values
+	mvdecode _all, mv(-1=. \ -2=.t \ -3=.x \ -5=.y \ -8=.z)
+```
+
+***
+**R**
+```{r}
+# Missing Values
+	na_codes <- c(-1:-8)
+
+  for (i in seq_along(ppfad_2008)) {
+    ppfad_2008[[i]][ppfad_2008[[i]] %in% na_codes] <- NA
+  }
+```
+
+Manipulating Data
+========================================================
+- Keep and drop variables
+- Rename and replace variables
+- Only changing certain rows (if syear == 2015)
+
+
+[R For Stata Users](http://www.matthieugomez.com/statar/manipulate-data.html)(matthieu gomez)
+
+Manipulating Data
+========================================================
+### Replacing certain rows
+**STATA**
+
+```{r, results=F, engine="stata-mp", comment=""}
+gen age = .
+replace age = 2008 - gebjahr if gebjahr >= 1950
+tab age
+```
+
+***
+**R**
+```{r}
+ppfad_2008 %>%
+  mutate(age = ifelse(gebjahr >= 1950, 2008- gebjahr, NA)) %>%
+  select(age) %>%
+  group_by(age) %>%
+  tally()
+```
+
+
+Describing Data
+========================================================
+How many people have lived in a realised household in 2008 and responded to the individual questionnaire?
+
+
+**STATA**
+```{r, results=F, engine="stata-mp", comment=""}
+tab ynetto if (ynetto==10 | ynetto==12 | ynetto==19 | ynetto==20 ) & (ypop==1 | ypop==2)
+
+tab ypop if (ynetto==10 | ynetto==12 | ynetto==19 | ynetto==20 ) & (ypop==1 | ypop==2)
+
+tab1 ynetto ypop if (ynetto==10 | ynetto==12 | ynetto==19 | ynetto==20 ) & (ypop==1 | ypop==2)
+
+```
+
+***
+**R**
+```{r}
+# 10 to 19 represent realized interviews
+ 	table(ppfad_2008$ynetto)
+# 1 and 2 are private households
+      table(ppfad_2008$ypop)
+
+#get.label(ppfad_2008, "ypop")
+```
+
+Stata to R package
+========================================================
+```{r}
+library(statar)
+ppfad_2008 %>%
+  statar::tab(ynetto)
+```
+
+
+
+My Pro's and Con's
+========================================================
+**Pro**
++ Markdown, LaTeX -> Reproducability
++ Open Source
++ Fun Learning Material / Community
++ Never stop learning
+
+**Con**
+- Harder to learn ?
+- Not straight forward
+- Never stop learning
+
+
+Thank You
+========================================================
+questions -> lreiber@diw.de
+
+
+<!-- Template -->
+<!-- ======================================================== -->
+<!-- **STATA** -->
+<!-- ```{r, results=F, engine="stata", engine.path=statapath, comment=""} -->
+<!-- >- Use this format -->
+<!-- >- to have bullets appear -->
+<!-- >- one at a time (incrementally) -->
+<!-- ``` -->
+
+<!-- *** -->
+<!-- **R** -->
+<!-- ```{r} -->
+<!-- >- Use this format -->
+<!-- >- to have bullets appear -->
+<!-- >- one at a time (incrementally) -->
+<!-- ``` -->
+
+<!-- New Section -->
+<!-- ==================================== -->
+<!-- type: section -->
+
+<!-- Prompt Slide -->
+<!-- ==================================== -->
+<!-- type: prompt -->
+
+<!-- sections are: -->
+
+<!--     section -->
+<!--     sub-section -->
+<!--     prompt -->
+<!--     alert -->
+
+<!-- incremental: true -->
