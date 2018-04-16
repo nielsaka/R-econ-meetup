@@ -27,3 +27,5 @@ This is where I found more information:
 #### Stata2R.html:
 
 Presentation that can be looked at with a browser
+
+For example [here](https://htmlpreview.github.io/?https://gitlab.com/nmaka/diw-r-meetings/raw/master/2017_12_13_stata_r/Stata2R.html).
