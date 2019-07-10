@@ -1,0 +1,299 @@
+---
+title: "How to build an acceptable Job Market Website with in RStudio"
+author: "Jakob Miethe"
+date: "5th of July"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## What is blogdown?
+
+\begin{itemize}
+\item an R package that creates static websites
+\item no server sided scripts needed, you can upload it anywhere and also look at it on your desktop 
+\item I found no compatability issues between Ubuntu and Windows
+\item go-to resource: https://bookdown.org/yihui/blogdown/
+\item fortunately, we don't have to understand everything happening here to use blogdown
+\item we write in markdown and build a website using hugo
+\end{itemize}
+\begin{tiny}
+Yihui Xie (2019). blogdown: Create Blogs and Websites with R Markdown. R package version 0.13.\\
+Yihui Xie, Alison Presmanes Hill, and Amber Thomas (2017). blogdown: Creating Websites with R Markdown. Chapman and Hall/CRC. ISBN 978-0815363729
+\end{tiny}
+
+## What is R Markdown?
+
+\begin{itemize}
+\item "markdown" is a document format (and syntax) used mostly (I think) for code descriptions or github cover pages 
+\item "R markdown" integrates this with R and significantly extends it to reports, websites, slides (these here for example), dashbords and many more; uses knitr, inspired by Pandoc
+\item can include R code (all kinds) as well as text (also Latex code)
+\item go-to resource: https://bookdown.org/yihui/rmarkdown/
+\item for blogdown, we just need to write text (with some hightlights and gimmicks) as you see in the examples
+\end{itemize}
+\begin{tiny}
+Allaire, JJ, Yihui Xie, Jonathan McPherson, Javier Luraschi, Kevin Ushey, Aron Atkins, Hadley Wickham, Joe Cheng, Winston Chang, and Richard Iannone. 2019. Rmarkdown: Dynamic Documents for R. https://CRAN.R-project.org/package=rmarkdown.
+\end{tiny}
+
+
+
+## What is Hugo?
+
+\begin{itemize}
+\item an open source static site generator written in Go
+\item source: https://gohugo.io/
+\item advertising says its fast and stable, I have no comparison but also not a single complaint so far
+\item also no issues with DSGVO on static pages
+\item can be hosted using  Netlify, Heroku, GoDaddy, DreamHost, GitHub Pages, GitLab Pages, Surge, Aerobatic, Firebase, Google Cloud Storage, Amazon S3, Rackspace, Azure, CloudFront, and probably more
+\item I use netlify
+\end{itemize}
+
+## Lets jump right in
+```{r, eval=FALSE}
+install.packages("blogdown")
+```
+```{r, eval=FALSE}
+blogdown::install_hugo()
+```
+then File -> New Project choose a folder
+
+
+wait, then have a look a the folder, then:
+```{r, eval=FALSE}
+blogdown::new_site(theme = "gcushen/hugo-academic")
+```
+wait and have a look at the folder. What just happened?
+
+if you have trouble try an empty theme: 
+```{r, eval=FALSE}
+blogdown::new_site()
+```
+other themes: https://themes.gohugo.io/
+
+## What is in this folder now?
+\begin{itemize}
+\item a fully functional website. click "show in viewer" in Rstudio to see it
+\item the folders include many files that I never went through but that you can edit when you found the answer to a question on the hugo forum for example
+\item .toml files are configuration files, you will use "config.toml" extensively: it defines the parameters of your websites
+\item .md files are markdown files we use for content
+\item .css files are used in your theme (currently: hugo academic), changing them is possible (find help online) but risky, because they do get changed in updates (when you download the theme again)
+\item there are also .Rmd files, .content files, .json files that I didn't need to touch so far
+\end{itemize}
+
+## The basic structure
+
+\begin{itemize}
+\item "config" includes configuration .tomls
+\item "content" is where you can put your files (such as papers, cv), and your .md files, \textbf{this is the main folder} with the site resources we will change
+\item "public" is your site as you will post it with .html files that blogdown/hugo created. Unless you are in crazy last minute workaround mode, only R should touch that folder
+\begin{itemize}
+\item You can though: for example to change your pdfs without recompiling the website. Make sure you also change them in "content" which will override "public" when you compile again
+\end{itemize}
+\item "themes" this is where we donwloaded the academic theme. If you don't like something about the theme, you can go into the .css files here and change it (I decreased the font size)
+\item I don't use the other folders (but I have the suspicion that "static" might be a better place for pdfs than content?)
+\end{itemize}
+
+## Your input
+
+most of the time you will only touch:
+
+\begin{enumerate}
+\item yoursitename.Rproj, in my case BasicWebsite.Rproj to load the project into RStudio
+\item config.toml to provide the site parameters
+\item the content folder to provide all content
+\end{enumerate}
+Lets have a look at the website Hugo created
+
+## Clean up
+
+before we go into detail, take out the advertising so we only see the website:
+\begin{itemize}
+\item look in content/home/ which is the default place for content
+\item Our adds are demo.md and hero.md. Open both and change "active = true" to "active = false". 
+\item This is how you in/exclude content (in this case "widgets") in your website. We'll talk about these widgets later.
+\end{itemize}
+if RStudio doesn't update automatically when you save, run:
+```{r, eval=FALSE}
+blogdown::build_site()
+```
+I hade some issues with run\_site() but if it works, its great
+
+## An academic job market website needs very little
+
+\begin{enumerate}
+\item a Menu
+\item some content
+\begin{itemize}
+\item text with links, colors, other tweaks
+\item pdfs
+\item maybe a video
+\end{itemize}
+\end{enumerate}
+that's pretty much it
+
+##  1. The Menu
+we see the menu here: "config/\_default/menus.toml", in other sites (like mine which is largely based on an older site of Alison Hill) its in the config.toml
+\begin{itemize}
+\item here you can see all menu entries
+\item the "name" will appear in the menu
+\item with the url you can link directly to .md files ("widgets") in the home folder or to subfolders
+\begin{itemize}
+\item if you use a hash, the file will appear on the same page (infinity scroll) 
+\item if you link to it with /yourmdfile, it will go on a separate page 
+\item For subfolders simply use /yourfolder/yourmdfile 
+\item You can also directly link to pdfs, for example: url $=$ "/cv/cv\_miethejakob.pdf"
+\end{itemize}
+\item "weight" orders the menu entries
+\end{itemize}
+
+
+
+## 2. The content (remainder of this talk)
+\begin{enumerate}
+\item infinity scroll or not?
+\item how to organize content
+\item how to write content
+\end{enumerate}
+
+
+##  To scroll or not to scroll?
+
+\begin{itemize}
+\item the Hugo template is an infinity scroll website
+\item but it also includes links to other pages in the menu (as we know already)
+\item compare "courses" to the other links
+\item active widgets can be called in the url (even if you didn't link to them in the menu)
+\end{itemize}
+When I started, I based my website on the one of Alison Hill which used infinity scroll back then. She has also moved away from it! https://alison.rbind.io/
+
+
+## How to organize content: No infinity scroll
+
+Expecting time constrained job market recruiters who are used to google scholar, I wanted to emulate the page structure there. I also thought that in the long run (when I'll have many projects, teaching material etc there), a compartmentalized website makes more sense for me.
+
+There are basically four ways that I have found for subsites:
+\begin{enumerate}
+\item 'master widgets' combine several .md files from one folder with certain visualization settings. This is the way hugo academic is meant to be built. It felt a little overkill for a job market website, however.
+\item lists of .md files without a widget 
+\item a direct link to a document (your cv for example)
+\item a workaround I use until I figure the rest out: one .md file in which I write content directly without links etc
+\end{enumerate}
+
+## What are widgets?
+
+\begin{itemize}
+\item the hugo academic theme provides "widgets" to organize your content
+\item these are basically layout templates for your sites
+\item see an overview here: https://sourcethemes.com/academic/docs/page-builder/
+\item when I built my page there were much less, I didn't take much advantage of it
+\item each of our .md files chooses a widget (check)
+\item the content/courses page is organized differently (I haven't checked it)
+\end{itemize}
+
+
+## Content 1: A master widget
+\begin{itemize}
+\item have a look at the "Projects" link, it shows 2 pages 
+\item they are in /content/project/
+\item look at the 'master widget' in /content/home/ called projects.md
+\item do we already understand some stuff in the preamble there?
+\item the .md also defines tags for example that you could give your different projects (look at the internal project to see this)
+\item where does the file define which .mds to use? [content] and page\_type. Try changing that and see what graphical parameters the widget defines, irrespective of the other .md files it then links
+\item now you could just load more .md files into that folder and they will show up inside projects on the website.
+\end{itemize}
+
+## Content 2: Listing .md files
+
+\begin{itemize}
+\item instead of having the "projects.md" widget organize the content, lets simply create a new folder in content named "research" and run the following code:
+\end{itemize}
+```{r, eval=FALSE}
+blogdown::new_content(path="/research/researchproject1.md")
+blogdown::new_content(path="/research/researchproject2.md")
+blogdown::new_content(path="/research/researchproject3.md")
+```
+
+\begin{itemize}
+\item lets go into the menu (or config) .toml and add to the menus:
+\end{itemize}
+
+```{r, eval=FALSE}
+[[main]]
+  name = "Research"
+  url = "research/"
+  weight = 51
+```
+prettier with a master widget but works
+
+## Content 3: A direct link
+This is simple: In the menu .toml you simply define the link:
+
+```{r, eval=FALSE}
+url = "/cv/cv_miethejakob.pdf"
+```
+
+keep in mind that files are also uploaded if you didn't provide a menu entry and can be accesses with the correct url. Also notice that I created a folder "cv" in my content folder in which I put the pdf
+
+I was also able to out of the box link to a video. You can also do that inside markdown pages of course.
+
+
+## Content 4: A simple .md file
+This is a workaround but its what got me closest to the standard job market website fast. In the standard hugo academic logic, each paper should be its own project/widget/folder/etc
+\begin{itemize}
+\item my workaround: one .md that I use as a page
+\item copy or create an .md file
+\item lets look at the preamble and at the markdown code
+\end{itemize}
+What I didn't solve (probably have to go into the theme css files where the custom widget is defined): I'd like to get rid of the dates...
+
+## Content 4a: The preamble
+
+\includegraphics[width=\textwidth]{MyMd1.png}
+
+## Content 4b: The markdown code
+
+\includegraphics[width=\textwidth]{MyMd2.png}
+
+## This is a workaround
+
+\begin{itemize}
+\item I simply continued in the same .md with the next project and had one .md for research, teaching, and policy
+\item the other two things in my menu are a direct link (cv) and an infinity scroll link (contact) that is another .md we can look at
+\item this is very limited compared to the rich widget structure (where you can have folders full of stuff for each project) 
+\item but its sufficient for a job market website
+\item for much more fleshed out website thats useful long term, check out https://alison.rbind.io/
+\end{itemize}
+
+I still chose this over google scholar because as you saw, I can easily move to a more complicated website when I have enough material so it makes sense and I have full control over that content.
+
+## Final content: The "about" widget
+this is the first thing your visitor sees, add:
+\begin{itemize}
+\item welcome text
+\item research interests 
+\item references
+\end{itemize}
+I never managed to make the image square but it should be possible in the theme css files I would think.
+
+## Ingredients summary
+my website is very simple. It only consists of:
+\begin{enumerate}
+\item the config .toml with the menu and some options (I got rid of all the social media links for example)
+\item three .md files I put in the content folder (research, teaching, policy)
+\item an about and a contact widget in the home folder
+\item pdfs of my cv and my papers (and a video at the time)
+\end{enumerate}
+Thats it!
+
+## How to publish your website
+
+simply publish the public folder, I'll show you how to do this with netlify.
+
+
+
+
+## Presentation
+
+This presentation is written in R markdown, output: beamer_presentation. Can we have an R group on how to make these pretty and combine them with other beamer templates such as metropolis or the DIW gc template?
