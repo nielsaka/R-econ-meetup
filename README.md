@@ -1,10 +1,15 @@
-# Econ-R
+# R-Econ
 This is a collection of slides from past R meetings. We meet every couple of weeks or months to discuss helpful tools from the R ecosystem for our research.
 Topics range from basic housekeeping tools, data acquisition, manipulation and visualisation to
 estimation, inference, reproducibility, and publication of research results. The meeting language is either English or German.
 
 If you would like to be informed about meetings or to present at one of them, you are very welcome to contact
-TBD.
+
+```{r}
+account <- "r-econ"
+domain  <- "outlook.com"
+paste(account, domain, sep = "@")
+```
 
 ## Other meetups
 
